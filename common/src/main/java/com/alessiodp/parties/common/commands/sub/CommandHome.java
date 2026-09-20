@@ -1,6 +1,7 @@
 package com.alessiodp.parties.common.commands.sub;
 
 import com.alessiodp.core.common.ADPPlugin;
+import com.alessiodp.parties.common.parties.ClanHomePolicy;
 import com.alessiodp.core.common.commands.utils.ADPMainCommand;
 import com.alessiodp.core.common.commands.utils.CommandData;
 import com.alessiodp.core.common.scheduling.CancellableTask;
@@ -94,7 +95,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 				return;
 			}
 			
-			if (party.getHomes().size() == 0) {
+			if (ClanHomePolicy.orderedHomes(party).size() == 0) {
 				sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_NOHOME, party);
 				return;
 			}
@@ -103,13 +104,13 @@ public abstract class CommandHome extends PartiesSubCommand {
 		if (ConfigParties.ADDITIONAL_HOME_MAX_HOMES > 1) {
 			// Multiple home
 			if (commandData.getArgs().length == 1) {
-				if (party.getHomes().size() > 1) {
+				if (ClanHomePolicy.orderedHomes(party).size() > 1) {
 					sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_MUST_SELECT_HOME, party);
 					printValidHomes(sender, partyPlayer, party);
 					return;
 				}
 				
-				Optional<PartyHome> opt = party.getHomes().stream().findFirst();
+				Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().findFirst();
 				if (opt.isPresent())
 					partyHome = (PartyHomeImpl) opt.get();
 				else {
@@ -127,7 +128,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 				
 				// Get the partyHome of the current party
 				if (party != null) {
-					Optional<PartyHome> opt = party.getHomes().stream().filter((ph) -> ph.getName() != null && ph.getName().equalsIgnoreCase(commandData.getArgs()[1])).findAny();
+					Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().filter((ph) -> ph.getName() != null && ph.getName().equalsIgnoreCase(commandData.getArgs()[1])).findAny();
 					if (opt.isPresent())
 						partyHome = (PartyHomeImpl) opt.get();
 				}
@@ -138,13 +139,13 @@ public abstract class CommandHome extends PartiesSubCommand {
 					party = getPlugin().getPartyManager().getParty(commandData.getArgs()[1]);
 					
 					if (party != null) {
-						if (party.getHomes().size() > 1) {
+						if (ClanHomePolicy.orderedHomes(party).size() > 1) {
 							sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_MUST_SELECT_HOME, party);
 							printValidHomes(sender, partyPlayer, party);
 							return;
 						}
 						
-						Optional<PartyHome> opt = party.getHomes().stream().findFirst();
+						Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().findFirst();
 						if (opt.isPresent())
 							partyHome = (PartyHomeImpl) opt.get();
 					}
@@ -166,7 +167,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 				party = getPlugin().getPartyManager().getParty(commandData.getArgs()[1]);
 				
 				if (party != null) {
-					Optional<PartyHome> opt = party.getHomes().stream().filter((ph) -> ph.getName() != null && ph.getName().equalsIgnoreCase(commandData.getArgs()[1])).findAny();
+					Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().filter((ph) -> ph.getName() != null && ph.getName().equalsIgnoreCase(commandData.getArgs()[1])).findAny();
 					if (opt.isPresent())
 						partyHome = (PartyHomeImpl) opt.get();
 					else {
@@ -186,7 +187,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 		} else {
 			// Single home
 			if (commandData.getArgs().length == 1) {
-				Optional<PartyHome> opt = party.getHomes().stream().findFirst();
+				Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().findFirst();
 				if (opt.isPresent())
 					partyHome = (PartyHomeImpl) opt.get();
 				else {
@@ -197,7 +198,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 				party = getPlugin().getPartyManager().getParty(commandData.getArgs()[1]);
 				
 				if (party != null) {
-					Optional<PartyHome> opt = party.getHomes().stream().findFirst();
+					Optional<PartyHome> opt = ClanHomePolicy.orderedHomes(party).stream().findFirst();
 					if (opt.isPresent())
 						partyHome = (PartyHomeImpl) opt.get();
 					else {
@@ -215,6 +216,23 @@ public abstract class CommandHome extends PartiesSubCommand {
 			}
 		}
 		
+        final PartyImpl destinationParty = party;
+        final PartyHomeImpl destinationHome = partyHome;
+        final boolean staffAccess = commandData.havePermission(PartiesPermission.ADMIN_HOME_OTHERS);
+        java.util.function.BooleanSupplier accessCheck = () -> {
+            synchronized (destinationParty) {
+                return staffAccess ? ClanHomePolicy.orderedHomes(destinationParty).contains(destinationHome)
+                        : destinationParty.getId().equals(partyPlayer.getPartyId())
+                        && destinationParty.getMembers().contains(partyPlayer.getPlayerUUID())
+                        && ClanHomePolicy.canUse(destinationParty, destinationHome);
+            }
+        };
+        if (!accessCheck.getAsBoolean()) {
+            sender.sendMessage("&cThis clan home is locked or no longer available.", true);
+            sender.sendMessage(ClanHomePolicy.allowance(party), true);
+            return;
+        }
+
 		if (!commandData.havePermission(PartiesPermission.ADMIN_HOME_OTHERS)
 				&& !getPlugin().getRankManager().checkPlayerRankAlerter(partyPlayer, RankPermission.HOME))
 			return;
@@ -255,6 +273,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 		// Command starts
 		if (ConfigParties.ADDITIONAL_HOME_DELAY > 0) {
 			HomeDelayTask homeDelayTask = teleportPlayerWithDelay(partyPlayer, partyHome, ConfigParties.ADDITIONAL_HOME_DELAY);
+            homeDelayTask.setAccessCheck(accessCheck);
 			
 			CancellableTask task = plugin.getScheduler().scheduleAsyncRepeating(homeDelayTask, 0, 300, TimeUnit.MILLISECONDS);
 			partyPlayer.setPendingHomeDelay(task);
@@ -262,7 +281,7 @@ public abstract class CommandHome extends PartiesSubCommand {
 			sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_TELEPORTIN
 					.replace("%seconds%", Integer.toString(ConfigParties.ADDITIONAL_HOME_DELAY)));
 		} else {
-			teleportPlayer(sender, partyPlayer, partyHome);
+			teleportPlayer(sender, partyPlayer, partyHome, accessCheck);
 		}
 		
 		plugin.getLoggerManager().logDebug(String.format(PartiesConstants.DEBUG_CMD_HOME,
@@ -271,12 +290,13 @@ public abstract class CommandHome extends PartiesSubCommand {
 	
 
 	private void printValidHomes(User sender, PartyPlayerImpl partyPlayer, PartyImpl party) {
-		if (party.getHomes().size() > 0) {
+        if (ConfigParties.ADDITIONAL_HOME_SIZE_ENABLED) sender.sendMessage(ClanHomePolicy.allowance(party), true);
+		if (ClanHomePolicy.orderedHomes(party).size() > 0) {
 			sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_VALID_HOMES, party);
 			
-			for (PartyHome h : party.getHomes()) {
+			for (PartyHome h : ClanHomePolicy.orderedHomes(party)) {
 				sendMessage(sender, partyPlayer, Messages.ADDCMD_HOME_HOME_VALID_HOME_LINE
-						.replace("%name%", CommonUtils.getOr(h.getName(), ""))
+						.replace("%name%", CommonUtils.getOr(h.getName(), "") + (ClanHomePolicy.canUse(party, h) ? "" : " [locked]"))
 						.replace("%world%", h.getWorld())
 						.replace("%x%", Integer.toString((int) h.getX()))
 						.replace("%y%", Integer.toString((int) h.getY()))
@@ -293,6 +313,11 @@ public abstract class CommandHome extends PartiesSubCommand {
 	// Teleport the player
 	protected abstract void teleportPlayer(User player, PartyPlayerImpl partyPlayer, PartyHomeImpl home);
 	
+    protected void teleportPlayer(User player, PartyPlayerImpl partyPlayer, PartyHomeImpl home,
+                                  java.util.function.BooleanSupplier accessCheck) {
+        if (accessCheck.getAsBoolean()) teleportPlayer(player, partyPlayer, home);
+    }
+
 	// Get the task for home delay
 	protected abstract HomeDelayTask teleportPlayerWithDelay(PartyPlayerImpl partyPlayer, PartyHomeImpl home, int delay);
 }

@@ -18,3 +18,6 @@ Everything is configurable and modular, if you don't want a feature, just disabl
 
 ## License
 [Read the license here](https://github.com/AlessioDP/Parties/blob/master/LICENSE).
+## CatCraft additions
+
+See [the CatCraft guide](docs/CATCRAFT.md) for `/clanadmin` staff commands, permissions, size-based homes, and build/deployment instructions.

@@ -6,6 +6,23 @@ import com.alessiodp.parties.common.parties.objects.PartyHomeImpl;
 import com.alessiodp.parties.common.players.objects.PartyPlayerImpl;
 
 public abstract class HomeDelayTask extends TeleportingDelayTask implements Runnable {
+    private java.util.function.BooleanSupplier accessCheck = () -> true;
+
+    public void setAccessCheck(java.util.function.BooleanSupplier accessCheck) {
+        this.accessCheck = accessCheck;
+    }
+
+    protected boolean hasAccess() { return accessCheck.getAsBoolean(); }
+
+    @Override public void run() {
+        if (!hasAccess()) {
+            cancel();
+            partyPlayer.sendMessage("&cThis clan home is no longer available. Teleport cancelled.");
+            return;
+        }
+        super.run();
+    }
+
 	protected final PartyHomeImpl home;
 	
 	public HomeDelayTask(PartiesPlugin plugin, PartyPlayerImpl partyPlayer, long delayTime, PartyHomeImpl home) {

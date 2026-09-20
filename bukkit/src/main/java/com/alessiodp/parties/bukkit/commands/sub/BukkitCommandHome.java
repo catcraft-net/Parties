@@ -28,6 +28,12 @@ public class BukkitCommandHome extends CommandHome {
 	
 	@Override
 	protected void teleportPlayer(User player, PartyPlayerImpl partyPlayer, PartyHomeImpl home) {
+        teleportPlayer(player, partyPlayer, home, () -> true);
+    }
+
+    @Override
+    protected void teleportPlayer(User player, PartyPlayerImpl partyPlayer, PartyHomeImpl home,
+                                  java.util.function.BooleanSupplier accessCheck) {
 		Location loc = new Location(
 				Bukkit.getWorld(home.getWorld()),
 				home.getX(),
@@ -39,7 +45,7 @@ public class BukkitCommandHome extends CommandHome {
 		
 		BukkitUser bukkitUser = (BukkitUser) plugin.getPlayer(partyPlayer.getPlayerUUID());
 		if (bukkitUser != null)
-			teleportToPartyHome((PartiesPlugin) plugin, partyPlayer, bukkitUser, home, loc);
+			teleportToPartyHome((PartiesPlugin) plugin, partyPlayer, bukkitUser, home, loc, Messages.ADDCMD_HOME_TELEPORTED, accessCheck);
 	}
 	
 	@Override
@@ -57,12 +63,22 @@ public class BukkitCommandHome extends CommandHome {
 	}
 	
 	public static void teleportToPartyHome(PartiesPlugin plugin, PartyPlayerImpl player, BukkitUser bukkitUser, PartyHome home, Location location, String message) {
+        teleportToPartyHome(plugin, player, bukkitUser, home, location, message, () -> true);
+    }
+
+    public static void teleportToPartyHome(PartiesPlugin plugin, PartyPlayerImpl player, BukkitUser bukkitUser,
+                                          PartyHome home, Location location, String message,
+                                          java.util.function.BooleanSupplier accessCheck) {
 		PartyImpl party = plugin.getPartyManager().getParty(player.getPartyId());
 		IPlayerPreHomeEvent partiesPreHomeEvent = plugin.getEventManager().preparePlayerPreHomeEvent(player, party, home);
 		plugin.getEventManager().callEvent(partiesPreHomeEvent);
 		if (!partiesPreHomeEvent.isCancelled()) {
 			plugin.getScheduler().getSyncExecutor().execute(() -> {
-				EssentialsHandler.updateLastTeleportLocation(player.getPlayerUUID());
+                if (!accessCheck.getAsBoolean()) {
+                    player.sendMessage("&cThis clan home is no longer available. Teleport cancelled.");
+                    return;
+                }
+                EssentialsHandler.updateLastTeleportLocation(player.getPlayerUUID());
 				
 				bukkitUser.teleportAsync(location).thenAccept(result -> {
 					if (result) {

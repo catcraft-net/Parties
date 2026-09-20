@@ -22,6 +22,10 @@ import com.alessiodp.parties.common.utils.PartiesPermission;
 import com.alessiodp.parties.common.utils.RankPermission;
 import org.jetbrains.annotations.NotNull;
 
+import com.alessiodp.parties.common.parties.ClanHomePolicy;
+import java.util.HashSet;
+import java.util.Set;
+import com.alessiodp.parties.api.interfaces.PartyHome;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -105,15 +109,12 @@ public abstract class CommandSetHome extends PartiesSubCommand {
 			}
 		}
 		
-		if (!isRemove
-				&& party.getHomes().size() >= ConfigParties.ADDITIONAL_HOME_MAX_HOMES) {
-			final String finalSelectedHome = selectedHome;
-			if (finalSelectedHome == null || party.getHomes().stream().noneMatch((h) -> finalSelectedHome.equalsIgnoreCase(h.getName()))) {
-				sendMessage(sender, partyPlayer, Messages.ADDCMD_SETHOME_MAXHOMES);
-				return;
-			}
-		}
-		
+        if (!isRemove && (!ClanHomePolicy.validName(selectedHome) || !ClanHomePolicy.canSet(party, selectedHome))) {
+            sender.sendMessage("&cHome name must use 1–32 letters, digits, underscores or hyphens; the home must be unlocked and within your allowance.", true);
+            sender.sendMessage(ClanHomePolicy.allowance(party), true);
+            return;
+        }
+
 		if (!isRemove) {
 			boolean mustStartCooldown = false;
 			int cooldown = ConfigParties.ADDITIONAL_HOME_COOLDOWN_SETHOME;
@@ -147,17 +148,20 @@ public abstract class CommandSetHome extends PartiesSubCommand {
 		
 		// Command starts
 		if (isRemove) {
-			boolean removed;
-			if (selectedHome == null || ConfigParties.ADDITIONAL_HOME_MAX_HOMES <= 1) {
-				party.getHomes().clear();
-				removed = true;
-			} else {
-				final String finalSelectedHome = selectedHome;
-				removed = party.getHomes().removeIf(h -> h.getName() != null && h.getName().equalsIgnoreCase(finalSelectedHome));
-			}
-			
+            boolean removed;
+            synchronized (party) {
+                Set<PartyHome> homes = new HashSet<>(party.getHomes());
+                if (!ConfigParties.ADDITIONAL_HOME_SIZE_ENABLED && ConfigParties.ADDITIONAL_HOME_MAX_HOMES <= 1) {
+                    removed = !homes.isEmpty();
+                    homes.clear();
+                } else {
+                    final String name = selectedHome;
+                    removed = homes.removeIf(h -> name != null && name.equalsIgnoreCase(h.getName()));
+                }
+                if (removed) party.setHomes(homes);
+            }
+
 			if (removed) {
-				party.updateParty();
 				
 				sendMessage(sender, partyPlayer, Messages.ADDCMD_SETHOME_REMOVED);
 			} else {
@@ -167,10 +171,7 @@ public abstract class CommandSetHome extends PartiesSubCommand {
 			plugin.getLoggerManager().logDebug(String.format(PartiesConstants.DEBUG_CMD_SETHOME_REM,
 					partyPlayer.getName(), party.getName() != null ? party.getName() : "_", CommonUtils.getNoEmptyOr(selectedHome, "default")), true);
 		} else {
-			getLocationAndSave(partyPlayer, party, selectedHome);
-			
-			sendMessage(sender, partyPlayer, Messages.ADDCMD_SETHOME_CHANGED);
-			party.broadcastMessage(Messages.ADDCMD_SETHOME_BROADCAST, partyPlayer);
+            getLocationAndSave(partyPlayer, party, selectedHome);
 			
 			plugin.getLoggerManager().logDebug(String.format(PartiesConstants.DEBUG_CMD_SETHOME,
 					partyPlayer.getName(), party.getName() != null ? party.getName() : "_", CommonUtils.getNoEmptyOr(selectedHome, "default")), true);
@@ -179,18 +180,25 @@ public abstract class CommandSetHome extends PartiesSubCommand {
 	
 	protected abstract void getLocationAndSave(@NotNull PartyPlayerImpl sender, @NotNull PartyImpl party, @NotNull String name);
 	
-	public static void savePartyHome(PartyImpl party, PartyHomeImpl home) {
-		if (home != null) {
-			if (ConfigParties.ADDITIONAL_HOME_MAX_HOMES <= 1)
-				party.getHomes().clear();
-			else {
-				party.getHomes().removeIf(h -> h.getName() != null && h.getName().equalsIgnoreCase(home.getName()));
-			}
-			party.getHomes().add(home);
-			party.updateParty().thenRun(party::sendPacketUpdate).exceptionally(ADPScheduler.exceptionally());;
-		}
-	}
-	
+    public static void savePartyHome(PartyImpl party, PartyHomeImpl home) {
+        trySavePartyHome(party, home);
+    }
+
+    public static boolean trySavePartyHome(PartyImpl party, PartyHomeImpl home) {
+        if (home == null || !ClanHomePolicy.validName(home.getName())) return false;
+        synchronized (party) {
+            if (!ClanHomePolicy.canSet(party, home.getName())) return false;
+            Set<PartyHome> homes = new HashSet<>(party.getHomes());
+            if (!ConfigParties.ADDITIONAL_HOME_SIZE_ENABLED && ConfigParties.ADDITIONAL_HOME_MAX_HOMES <= 1)
+                homes.clear();
+            else
+                homes.removeIf(h -> home.getName().equalsIgnoreCase(h.getName()));
+            homes.add(home);
+            party.setHomes(homes);
+            return true;
+        }
+    }
+
 	@Override
 	public List<String> onTabComplete(@NotNull User sender, String[] args) {
 		List<String> ret = new ArrayList<>();
