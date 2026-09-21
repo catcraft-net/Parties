@@ -9,6 +9,7 @@ import com.alessiodp.parties.common.commands.PartiesCommandManager;
 import com.alessiodp.parties.common.configuration.data.ConfigMain;
 
 import java.util.ArrayList;
+import com.alessiodp.parties.common.commands.main.CommandClanAdmin;
 
 public class BungeePartiesCommandManager extends PartiesCommandManager {
 	public BungeePartiesCommandManager(ADPPlugin plugin) {
@@ -27,5 +28,6 @@ public class BungeePartiesCommandManager extends PartiesCommandManager {
 		mainCommands = new ArrayList<>();
 		mainCommands.add(new BungeeCommandParty((PartiesPlugin) plugin));
 		mainCommands.add(new BungeeCommandP((PartiesPlugin) plugin));
+			mainCommands.add(new CommandClanAdmin((PartiesPlugin) plugin));
 	}
 }

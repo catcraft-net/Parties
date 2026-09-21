@@ -23,6 +23,7 @@ public class BungeeCommandSetHome extends CommandSetHome {
 			String serverName = ((BungeeUser) user).getServer().getName();
 			
 			((BungeePartiesMessageDispatcher) plugin.getMessenger().getMessageDispatcher()).sendAddHome(user, party, name, serverName);
+            sender.sendMessage("&eClan home location requested.");
 		}
 	}
 }

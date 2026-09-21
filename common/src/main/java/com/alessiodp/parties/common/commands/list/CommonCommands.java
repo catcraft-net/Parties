@@ -5,6 +5,12 @@ import com.alessiodp.core.common.commands.list.ADPCommand;
 public enum CommonCommands implements ADPCommand {
 	P,
 	PARTY,
+	CLANADMIN,
+	CLANADMIN_RENAME,
+	CLANADMIN_LEADER,
+	CLANADMIN_RANK,
+	CLANADMIN_KICK,
+	CLANADMIN_DELHOME,
 	
 	HELP,
 	ACCEPT,

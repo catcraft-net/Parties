@@ -1,6 +1,7 @@
 package com.alessiodp.parties.bukkit.commands;
 
 import java.util.ArrayList;
+import com.alessiodp.parties.common.commands.main.CommandClanAdmin;
 
 import com.alessiodp.core.bukkit.commands.utils.BukkitCommandUtils;
 import com.alessiodp.core.common.ADPPlugin;
@@ -19,6 +20,8 @@ public class BukkitPartiesCommandManager extends PartiesCommandManager {
 	@Override
 	public void prepareCommands() {
 		super.prepareCommands();
+        commandOrder.add("browse");
+        commandOrder.add("recruitment");
 		commandUtils = new BukkitCommandUtils(plugin, ConfigMain.COMMANDS_MISC_ON, ConfigMain.COMMANDS_MISC_OFF);
 	}
 	
@@ -28,6 +31,7 @@ public class BukkitPartiesCommandManager extends PartiesCommandManager {
 		mainCommands.add(new BukkitCommandParty((PartiesPlugin) plugin));
 		if (!((PartiesPlugin) plugin).isBungeeCordEnabled()) {
 			mainCommands.add(new BukkitCommandP((PartiesPlugin) plugin));
+			mainCommands.add(new CommandClanAdmin((PartiesPlugin) plugin));
 		}
 	}
 }

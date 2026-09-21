@@ -59,6 +59,7 @@ public class BukkitHomeDelayTask extends HomeDelayTask {
 	
 	@Override
 	protected void performTeleport() {
-		BukkitCommandHome.teleportToPartyHome(plugin, partyPlayer, (BukkitUser) player, home, finalLocation);
+		BukkitCommandHome.teleportToPartyHome(plugin, partyPlayer, (BukkitUser) player, home, finalLocation,
+                com.alessiodp.parties.common.configuration.data.Messages.ADDCMD_HOME_TELEPORTED, this::hasAccess);
 	}
 }

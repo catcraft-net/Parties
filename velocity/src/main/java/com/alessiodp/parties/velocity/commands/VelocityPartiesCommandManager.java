@@ -9,6 +9,7 @@ import com.alessiodp.parties.velocity.commands.main.VelocityCommandP;
 import com.alessiodp.parties.velocity.commands.main.VelocityCommandParty;
 
 import java.util.ArrayList;
+import com.alessiodp.parties.common.commands.main.CommandClanAdmin;
 
 public class VelocityPartiesCommandManager extends PartiesCommandManager {
 	public VelocityPartiesCommandManager(ADPPlugin plugin) {
@@ -27,5 +28,6 @@ public class VelocityPartiesCommandManager extends PartiesCommandManager {
 		mainCommands = new ArrayList<>();
 		mainCommands.add(new VelocityCommandParty((PartiesPlugin) plugin));
 		mainCommands.add(new VelocityCommandP((PartiesPlugin) plugin));
+			mainCommands.add(new CommandClanAdmin((PartiesPlugin) plugin));
 	}
 }

@@ -11,6 +11,15 @@ public class BukkitConfigParties extends ConfigParties {
 	@Getter private final String resourceName = "bukkit/parties.yml";
 	@Getter private final int latestVersion = PartiesConstants.VERSION_BUKKIT_CONFIG_PARTIES;
 	
+	@ConfigOption(path = "additional.recruitment.enable")
+	public static boolean RECRUITMENT_ENABLE;
+	@ConfigOption(path = "additional.recruitment.minimum-playtime-minutes")
+	public static int RECRUITMENT_MINUTES = 120;
+	@ConfigOption(path = "additional.recruitment.clans-per-page")
+	public static int RECRUITMENT_PAGE_SIZE = 28;
+	@ConfigOption(path = "additional.recruitment.kick-rejoin-block-hours")
+	public static int RECRUITMENT_KICK_HOURS = 24;
+
 	// Additional settings
 	@ConfigOption(path = "additional.home.cancel.hit")
 	public static boolean		ADDITIONAL_HOME_CANCEL_HIT;

@@ -28,6 +28,7 @@ public class VelocityCommandSetHome extends CommandSetHome {
 				String serverName = serverConnection.getServerInfo().getName();
 				
 				((VelocityPartiesMessageDispatcher) plugin.getMessenger().getMessageDispatcher()).sendAddHome(user, party, name, serverName);
+            sender.sendMessage("&eClan home location requested.");
 			}
 		}
 	}

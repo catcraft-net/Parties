@@ -87,6 +87,7 @@ public abstract class PartyImpl implements Party {
 	@EqualsAndHashCode.Exclude @ToString.Exclude @Getter private final HashSet<PartyInvite> inviteRequests;
 	
 	@EqualsAndHashCode.Exclude @ToString.Exclude protected boolean accessible = false;
+    private boolean deleted;
 	
 	protected PartyImpl(@NotNull PartiesPlugin plugin, @NotNull UUID id) {
 		this.plugin = plugin;
@@ -203,6 +204,7 @@ public abstract class PartyImpl implements Party {
 	
 	public void delete(@NotNull DeleteCause cause, @Nullable PartyPlayerImpl kicked, @Nullable PartyPlayerImpl commandSender) {
 		synchronized (this) {
+            deleted = true;
 			plugin.getPartyManager().removePartyFromCache(this); // Remove from cache
 			plugin.getDatabaseManager().removeParty(this); // Remove from database
 			
@@ -272,17 +274,25 @@ public abstract class PartyImpl implements Party {
 	}
 	
 	public boolean addMember(@NotNull PartyPlayer partyPlayer, @NotNull JoinCause cause, @Nullable PartyPlayerImpl inviter) {
+        return addMember(partyPlayer,cause,inviter,() -> true);
+    }
+
+    public boolean addMember(PartyPlayer partyPlayer, JoinCause cause, PartyPlayerImpl inviter,
+                             java.util.function.BooleanSupplier admission) {
 		boolean ret = false;
 		CompletableFuture<Void> futureAfterUpdate = null;
 		synchronized (this) {
-			if (!isFull() && !members.contains(partyPlayer.getPlayerUUID())) {
-				members.add(partyPlayer.getPlayerUUID());
-				onlineMembers.add(partyPlayer);
-				
-				((PartyPlayerImpl) partyPlayer).addIntoParty(id, ConfigParties.RANK_SET_DEFAULT);
-				
-				futureAfterUpdate = updateParty();
-				ret = true;
+			// Membership and the destination capacity must be checked together.
+			// Lock order matches removal: party, then player.
+			synchronized (partyPlayer) {
+				if (!deleted && partyPlayer.getPartyId() == null && !isFull()
+						&& !members.contains(partyPlayer.getPlayerUUID()) && canAdmit(partyPlayer, cause) && admission.getAsBoolean()) {
+					members.add(partyPlayer.getPlayerUUID());
+					onlineMembers.add(partyPlayer);
+					((PartyPlayerImpl) partyPlayer).addIntoParty(id, ConfigParties.RANK_SET_DEFAULT);
+					futureAfterUpdate = updateParty();
+					ret = true;
+				}
 			}
 		}
 		
@@ -293,6 +303,9 @@ public abstract class PartyImpl implements Party {
 		return ret;
 	}
 	
+	/** Final platform-specific admission check; no IO or events while holding membership locks. */
+	protected boolean canAdmit(PartyPlayer player, JoinCause cause) { return true; }
+
 	@Override
 	public boolean removeMember(@NotNull PartyPlayer partyPlayer) {
 		return removeMember(partyPlayer, LeaveCause.OTHERS, null);

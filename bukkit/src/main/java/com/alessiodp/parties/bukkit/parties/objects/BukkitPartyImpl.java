@@ -1,6 +1,8 @@
 package com.alessiodp.parties.bukkit.parties.objects;
 
 import com.alessiodp.core.common.user.User;
+import com.alessiodp.parties.bukkit.BukkitPartiesPlugin;
+import com.alessiodp.parties.bukkit.recruitment.RecruitmentService;
 import com.alessiodp.parties.api.enums.DeleteCause;
 import com.alessiodp.parties.api.enums.JoinCause;
 import com.alessiodp.parties.api.enums.LeaveCause;
@@ -28,16 +30,36 @@ public class BukkitPartyImpl extends PartyImpl {
 	@Override
 	public CompletableFuture<Void> updateParty() {
 		DynmapHandler.updatePartyMarker(this);
+        if (recruitment()!=null) recruitment().onPartyChanged(this);
 		return super.updateParty();
 	}
 	
+    private RecruitmentService recruitment() {
+        return plugin instanceof BukkitPartiesPlugin ? ((BukkitPartiesPlugin)plugin).getRecruitmentService() : null;
+    }
+    @Override protected boolean canAdmit(PartyPlayer player, JoinCause cause) {
+        return cause!=JoinCause.JOIN || recruitment()==null || recruitment().allowsPublicJoin(this,player.getPlayerUUID());
+    }
+    @Override public boolean removeMember(PartyPlayer player, LeaveCause cause, PartyPlayer kicker) {
+        synchronized (this) {
+            boolean removed=super.removeMember(player,cause,kicker);
+            if (removed && cause==LeaveCause.KICK && recruitment()!=null)
+                recruitment().recordKick(this,player.getPlayerUUID());
+            return removed;
+        }
+    }
+
 	@Override
 	public void delete() {
 		DynmapHandler.cleanupMarkers(this);
-		
 		super.delete();
 	}
 	
+    @Override public void delete(DeleteCause cause, PartyPlayerImpl kicked, PartyPlayerImpl sender) {
+        if(recruitment()!=null) recruitment().remove(getId());
+        super.delete(cause,kicked,sender);
+    }
+
 	@Override
 	public void rename(@Nullable String newName) {
 		DynmapHandler.cleanupMarkers(this);

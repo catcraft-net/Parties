@@ -32,6 +32,9 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.PluginManager;
 
 public class BukkitPartiesPlugin extends PartiesPlugin {
+    @Getter private com.alessiodp.parties.bukkit.recruitment.RecruitmentService recruitmentService;
+    @Getter private com.alessiodp.parties.bukkit.recruitment.RecruitmentMenu recruitmentMenu;
+
 	@Getter private final int bstatsId = PartiesConstants.PLUGIN_BSTATS_BUKKIT_ID;
 	
 	public BukkitPartiesPlugin(ADPBootstrap bootstrap) {
@@ -63,7 +66,13 @@ public class BukkitPartiesPlugin extends PartiesPlugin {
 		economyManager = new BukkitEconomyManager(this);
 		eventManager = new BukkitEventManager(this);
 		
+        recruitmentService=new com.alessiodp.parties.bukkit.recruitment.RecruitmentService(this,
+                ((Plugin)getBootstrap()).getDataFolder().toPath().resolve("recruitment.properties"));
+        recruitmentMenu=new com.alessiodp.parties.bukkit.recruitment.RecruitmentMenu(this,recruitmentService);
 		super.postHandle();
+        if (!isBungeeCordEnabled()) recruitmentService.start();
+        else if (com.alessiodp.parties.bukkit.configuration.data.BukkitConfigParties.RECRUITMENT_ENABLE)
+            getLogger().warn("Clan recruitment browser requires standalone realm-managed Parties; proxy mode is unsupported.");
 		
 		new BukkitMetricsHandler(this);
 		if (isBungeeCordEnabled()) {
@@ -86,6 +95,7 @@ public class BukkitPartiesPlugin extends PartiesPlugin {
 	protected void registerListeners() {
 		getLoggerManager().logDebug(Constants.DEBUG_PLUGIN_REGISTERING, true);
 		PluginManager pm = ((Plugin) getBootstrap()).getServer().getPluginManager();
+		pm.registerEvents(recruitmentMenu, ((Plugin) getBootstrap()));
 		pm.registerEvents(new BukkitChatListener(this), ((Plugin) getBootstrap()));
 		pm.registerEvents(new BukkitExpListener(this), ((Plugin) getBootstrap()));
 		pm.registerEvents(new BukkitFightListener(this), ((Plugin) getBootstrap()));
@@ -93,9 +103,15 @@ public class BukkitPartiesPlugin extends PartiesPlugin {
 		pm.registerEvents(new BukkitJoinLeaveListener(this), ((Plugin) getBootstrap()));
 	}
 	
+    @Override public void onDisabling() {
+        if (recruitmentService != null) recruitmentService.close();
+        super.onDisabling();
+    }
+
 	@Override
 	public void reloadConfiguration() {
 		super.reloadConfiguration();
+        if(recruitmentService!=null && !isBungeeCordEnabled())recruitmentService.rebuild();
 		
 		if (isBungeeCordEnabled()) {
 			if (BukkitConfigMain.PARTIES_BUNGEECORD_PACKETS_CONFIG_SYNC)

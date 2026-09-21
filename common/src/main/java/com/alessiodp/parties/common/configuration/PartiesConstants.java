@@ -17,13 +17,13 @@ public class PartiesConstants {
 	
 	// Versions
 	public static final int VERSION_BUKKIT_CONFIG_MAIN = 15;
-	public static final int VERSION_BUKKIT_CONFIG_PARTIES = 10;
+	public static final int VERSION_BUKKIT_CONFIG_PARTIES = 12;
 	public static final int VERSION_BUKKIT_MESSAGES = 16;
 	public static final int VERSION_BUNGEE_CONFIG_MAIN = 14;
-	public static final int VERSION_BUNGEE_CONFIG_PARTIES = 9;
+	public static final int VERSION_BUNGEE_CONFIG_PARTIES = 10;
 	public static final int VERSION_BUNGEE_MESSAGES = 14;
 	public static final int VERSION_VELOCITY_CONFIG_MAIN = 2;
-	public static final int VERSION_VELOCITY_CONFIG_PARTIES = 2;
+	public static final int VERSION_VELOCITY_CONFIG_PARTIES = 3;
 	public static final int VERSION_VELOCITY_MESSAGES = 2;
 	public static final int VERSION_DATABASE_YAML = 2;
 	

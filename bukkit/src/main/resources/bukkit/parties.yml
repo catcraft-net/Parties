@@ -159,6 +159,16 @@ ranks:
 # |       ADDITIONAL SETTINGS       |
 # \ =============================== /
 additional:
+  # Realm-local recruitment browser (standalone Bukkit/Paper only).
+  # Also enable join.enable and join.open-close.enable below, keeping open-by-default false.
+  # Each clan must explicitly opt in using /clan recruitment on.
+  recruitment:
+    enable: false
+    # Only gates /clan browse. Never shown in clan listings; does not restrict invites or /clan join.
+    minimum-playtime-minutes: 120
+    clans-per-page: 28
+    kick-rejoin-block-hours: 24
+
   # [Ask system]
   # Enable the command "/party ask <party>"
   # You can accept/deny the request with "/party accept/deny"
@@ -255,6 +265,13 @@ additional:
     cooldown-sethome: 0
     # Set the maximum number of homes
     max-homes: 1
+    # Opt in to clan-size unlocks. Set max-homes: 3 to allow all three tiers.
+    # All registered members count, including offline players.
+    # Surplus homes are kept but locked: default first, then names alphabetically.
+    member-tiers:
+      enable: false
+      second-home-members: 5
+      third-home-members: 10
     cancel:
       hit: true
       moving: true
@@ -392,4 +409,4 @@ additional:
 
 # End of configuration file
 dont-edit-this:
-  version: 10
+  version: 12

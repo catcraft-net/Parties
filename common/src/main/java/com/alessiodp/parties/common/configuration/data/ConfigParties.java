@@ -16,7 +16,13 @@ import java.util.Optional;
 import java.util.Set;
 
 public abstract class ConfigParties extends ConfigurationFile {
-	// General settings
+	@ConfigOption(path = "additional.home.member-tiers.enable")
+    public static boolean ADDITIONAL_HOME_SIZE_ENABLED;
+    @ConfigOption(path = "additional.home.member-tiers.second-home-members")
+    public static int ADDITIONAL_HOME_SIZE_SECOND = 5;
+    @ConfigOption(path = "additional.home.member-tiers.third-home-members")
+    public static int ADDITIONAL_HOME_SIZE_THIRD = 10;
+    // General settings
 	@ConfigOption(path = "general.members.limit")
 	public static int		GENERAL_MEMBERS_LIMIT;
 	@ConfigOption(path = "general.members.on-party-leave-change-leader")

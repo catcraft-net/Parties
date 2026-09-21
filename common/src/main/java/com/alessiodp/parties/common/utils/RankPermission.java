@@ -12,6 +12,7 @@ public enum RankPermission {
 	TELEPORT_ACCEPT		("party.teleport.accept"),
 	TELEPORT_DENY		("party.teleport.deny"),
 	
+	EDIT_RECRUITMENT     ("party.edit.recruitment"),
 	EDIT_CLOSE			("party.edit.close"),
 	EDIT_COLOR			("party.edit.color"),
 	EDIT_DESC			("party.edit.desc"),
