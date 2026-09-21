@@ -20,6 +20,8 @@ public class BukkitPartiesCommandManager extends PartiesCommandManager {
 	@Override
 	public void prepareCommands() {
 		super.prepareCommands();
+        commandOrder.add("browse");
+        commandOrder.add("recruitment");
 		commandUtils = new BukkitCommandUtils(plugin, ConfigMain.COMMANDS_MISC_ON, ConfigMain.COMMANDS_MISC_OFF);
 	}
 	

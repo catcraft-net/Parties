@@ -87,6 +87,11 @@ public class BukkitPartyPlayerImpl extends PartyPlayerImpl {
 				ret.add(BukkitCommands.CLAIM);
 			
 		}
+        if (player != null && !plugin.isBungeeCordEnabled()
+                && com.alessiodp.parties.bukkit.configuration.data.BukkitConfigParties.RECRUITMENT_ENABLE) {
+            if(player.hasPermission(PartiesPermission.USER_BROWSE)) ret.add(BukkitCommands.BROWSE);
+            if(isInParty() && player.hasPermission(PartiesPermission.USER_RECRUITMENT)) ret.add(BukkitCommands.RECRUITMENT);
+        }
 		return ret;
 	}
 	

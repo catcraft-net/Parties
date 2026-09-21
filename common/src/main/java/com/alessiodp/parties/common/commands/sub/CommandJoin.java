@@ -71,7 +71,7 @@ public class CommandJoin extends PartiesSubCommand {
 		
 		// Command handling
 		String partyName = commandData.getArgs()[1];
-		PartyImpl party = getPlugin().getPartyManager().getParty(partyName);
+		PartyImpl party = resolveParty(commandData);
 		if (party == null) {
 			sendMessage(sender, partyPlayer, Messages.PARTIES_COMMON_PARTYNOTFOUND
 					.replace("%party%", partyName));
@@ -101,12 +101,17 @@ public class CommandJoin extends PartiesSubCommand {
 			return;
 		}
 		
+		if (!isPublicJoinAllowed(party, partyPlayer)) {
+			sendMessage(sender, partyPlayer, Messages.ADDCMD_JOIN_OPENCLOSE_CANNOT_JOIN);
+			return;
+		}
+
 		if (party.isFull()) {
 			sendMessage(sender, partyPlayer, Messages.PARTIES_COMMON_PARTYFULL);
 			return;
 		}
 		
-		if (getPlugin().getEconomyManager().payCommand(EconomyManager.PaidCommand.JOIN, partyPlayer, commandData.getCommandLabel(), commandData.getArgs()))
+		if (payToJoin(commandData, partyPlayer, party))
 			return;
 		
 		// Command starts
@@ -116,7 +121,10 @@ public class CommandJoin extends PartiesSubCommand {
 		getPlugin().getEventManager().callEvent(partiesPreJoinEvent);
 		
 		if (!partiesPreJoinEvent.isCancelled()) {
-			party.addMember(partyPlayer, JoinCause.JOIN, partyPlayer);
+			if (!admit(commandData, party, partyPlayer)) {
+				sendMessage(sender, partyPlayer, Messages.ADDCMD_JOIN_OPENCLOSE_CANNOT_JOIN);
+				return;
+			}
 			
 			sendMessage(sender, partyPlayer, Messages.ADDCMD_JOIN_JOINED);
 			
@@ -128,4 +136,13 @@ public class CommandJoin extends PartiesSubCommand {
 			plugin.getLoggerManager().logDebug(String.format(PartiesConstants.DEBUG_API_JOINEVENT_DENY,
 					partyPlayer.getName(), party.getName() != null ? party.getName() : "_"), true);
 	}
+
+    protected PartyImpl resolveParty(CommandData data) { return getPlugin().getPartyManager().getParty(data.getArgs()[1]); }
+    protected boolean payToJoin(CommandData data, PartyPlayerImpl player, PartyImpl party) {
+        return getPlugin().getEconomyManager().payCommand(EconomyManager.PaidCommand.JOIN,player,data.getCommandLabel(),data.getArgs());
+    }
+    protected boolean admit(CommandData data, PartyImpl party, PartyPlayerImpl player) {
+        return party.addMember(player,JoinCause.JOIN,player);
+    }
+	protected boolean isPublicJoinAllowed(PartyImpl party, PartyPlayerImpl player) { return true; }
 }

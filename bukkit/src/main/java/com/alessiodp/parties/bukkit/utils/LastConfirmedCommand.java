@@ -7,6 +7,7 @@ public class LastConfirmedCommand {
 	@Getter @Setter private long timestamp;
 	@Getter @Setter private String command;
 	@Getter @Setter private boolean confirmed;
+    @Getter @Setter private java.util.UUID recruitmentClan;
 	
 	LastConfirmedCommand(long timestamp, String command) {
 		this.timestamp = timestamp;

@@ -3,6 +3,8 @@ package com.alessiodp.parties.common.utils;
 import com.alessiodp.core.common.commands.utils.ADPPermission;
 
 public enum PartiesPermission implements ADPPermission {
+	USER_BROWSE ("parties.user.browse"),
+	USER_RECRUITMENT ("parties.user.recruitment"),
 	ADMIN_CLAN_RENAME ("parties.admin.clan.rename"),
     ADMIN_CLAN_LEADER ("parties.admin.clan.leader"),
     ADMIN_CLAN_RANK ("parties.admin.clan.rank"),

@@ -57,6 +57,12 @@ public class BukkitCommandConfirm extends PartiesSubCommand {
 		
 		sendMessage(sender, partyPlayer, BukkitMessages.ADDCMD_VAULT_CONFIRM_CONFIRMED);
 		
+        if(packet.getRecruitmentClan()!=null) {
+            ((com.alessiodp.parties.bukkit.BukkitPartiesPlugin)plugin).getRecruitmentMenu()
+                    .join(sender.getUUID(),packet.getRecruitmentClan());
+            return;
+        }
+
 		// Make it sync
 		plugin.getScheduler().getSyncExecutor().execute(() -> {
 			Player player = Bukkit.getPlayer(sender.getUUID());

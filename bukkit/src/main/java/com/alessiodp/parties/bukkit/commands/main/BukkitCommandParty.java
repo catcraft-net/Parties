@@ -1,6 +1,8 @@
 package com.alessiodp.parties.bukkit.commands.main;
 
 import com.alessiodp.parties.bukkit.commands.sub.BukkitCommandClaim;
+import com.alessiodp.parties.bukkit.BukkitPartiesPlugin;
+import com.alessiodp.parties.bukkit.recruitment.*;
 import com.alessiodp.parties.bukkit.commands.sub.BukkitCommandConfirm;
 import com.alessiodp.parties.bukkit.commands.sub.BukkitCommandDebug;
 import com.alessiodp.parties.bukkit.commands.sub.BukkitCommandHome;
@@ -24,7 +26,17 @@ public class BukkitCommandParty extends CommandParty {
 			super.register(new BukkitCommandDebug(plugin, this));
 		
 		if (!((PartiesPlugin) plugin).isBungeeCordEnabled()) {
-			// Claim
+			if (BukkitConfigParties.RECRUITMENT_ENABLE) {
+                BukkitPartiesPlugin bukkit=(BukkitPartiesPlugin)instance;
+                super.register(new RecruitmentCommand(bukkit,this,true));
+                super.register(new RecruitmentCommand(bukkit,this,false));
+                if (BukkitConfigParties.ADDITIONAL_JOIN_ENABLE) {
+                    RecruitmentJoinCommand join=new RecruitmentJoinCommand(bukkit,this);
+                    super.register(join);
+                    bukkit.getRecruitmentMenu().setJoinCommand(join);
+                }
+            }
+            // Claim
 			if (BukkitConfigMain.ADDONS_CLAIM_ENABLE)
 				super.register(new BukkitCommandClaim(plugin, this));
 

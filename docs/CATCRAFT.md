@@ -1,6 +1,6 @@
 # CatCraft clan moderation and homes
 
-This fork is based on upstream Parties 3.2.18 (`97b03f2`), already present on CatCraft master. The supplied 3.2.9 JAR is older; its release source is commit `86f467b`. The custom build identifies itself as **3.2.18-catcraft.1**.
+This fork is based on upstream Parties 3.2.18 (`97b03f2`), already present on CatCraft master. The supplied 3.2.9 JAR is older; its release source is commit `86f467b`. The custom build identifies itself as **3.2.18-catcraft.2**.
 
 ## Server staff commands
 
@@ -81,3 +81,38 @@ Output: `output/target/Parties-3.2.18-catcraft.1.jar`. Maven Central's repositor
 Keep the existing Parties data, aliases, ranks, permissions, and other settings. Back up the plugin data before replacing the JAR. Merge the home settings above and restart when enabling/registering home commands. Automatic configuration upgrades are controlled by the existing `parties.automatic-upgrade-configs` setting; the new parties.yml schema is Bukkit 11, Bungee 10, Velocity 3. Do not replace a customized configuration wholesale with the example.
 
 The command and policy tests include no-clan staff, console, offline UUIDs, permission denial, duplicate names, event cancellation, leader protection, tier boundaries, shrink/regrowth, serialized home reload, competing saves, and delayed teleport invalidation. A disposable Paper test is separate from live deployment validation. No CatCraft realm has been modified by this task.
+
+## Clan recruitment browser (3.2.18-catcraft.2)
+
+This feature is for **standalone Bukkit/Paper, with clans managed on the realm**. Proxy-managed Parties is not supported by this browser. It uses the player's Minecraft playtime statistic on this realm (including AFK time); it does not aggregate playtime across servers.
+
+Merge the following into `plugins/Parties/parties.yml`, preserving your other settings, then restart:
+
+```yaml
+additional:
+  recruitment:
+    enable: true
+    minimum-playtime-minutes: 120
+    clans-per-page: 28
+    kick-rejoin-block-hours: 24
+  join:
+    enable: true
+    open-close:
+      enable: true
+      open-by-default: false
+```
+
+The playtime requirement gates **only `/clan browse`**. Below the threshold the command shows remaining minutes. Clan cards show no playtime. `/clan join` and invitations have no new playtime requirement. The GUI uses the configured main command and its aliases (`/party` works unless renamed); the examples assume CatCraft's `/clan` alias.
+
+- `/clan browse`: list recruiting clans, ordered by members online; click to join, or use previous/next/refresh/close. Players already in a clan can browse but must leave before joining another.
+- `/clan recruitment`: display your clan's opt-in status.
+- `/clan recruitment on`: leader enables public recruitment. Password-protected and fixed clans cannot opt in.
+- `/clan recruitment off`: unlist and close public joining; invitations still work.
+
+Every new and existing clan is unlisted initially, including previously open clans. Leaders can toggle by default; other clan ranks require `party.edit.recruitment` in their rank permissions. Bukkit permission nodes are `parties.user.browse` and `parties.user.recruitment` (default true); joining still requires `parties.user.join`. Clan ranks with `*` also have recruitment management. Existing home ranks/permissions are unchanged. Full/closed/password-protected clans are hidden; an ordinary `/clan close` hides the listing until reopened. The recruitment status command reports the opt-in flag, not whether capacity currently permits listing.
+
+Existing join fees and confirmation are honored. Normal free joins need one click. If payment confirmation is configured, it still applies and keeps the selected clan UUID even if the clan is renamed. Normal join events can cancel admission. The GUI does not teleport players.
+
+Kicking a player blocks public rejoining of that clan for the configured time (0 disables it; maximum 8760 hours). Explicit invitations can admit them earlier. The stored block continues until expiry even if they are invited back; leaving again does not clear it. This applies to staff kicks too. The registry is `plugins/Parties/recruitment.properties`; back it up alongside the Parties database. It stores UUID opt-ins and kick expirations, independently of the chosen YAML/SQL membership backend. It must not be shared across independent writers/realms. Persistence corruption disables recruitment until corrected and successfully reloaded. Do not hand-edit this file while the server is running.
+
+Menus use immutable cached listings; disk/database work stays off inventory event handlers. Configuration reload rebuilds directory eligibility, while final join checks reject stale selections. This does not make the inherited membership database transactional or guarantee recovery from database failures. Network-wide recruitment would need a separate proxy-authoritative design.

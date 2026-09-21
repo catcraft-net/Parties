@@ -7,6 +7,12 @@ main: com.alessiodp.parties.bukkit.bootstrap.BukkitPartiesBootstrap
 api-version: 1.13
 softdepend: [dynmap, LastLoginAPI, PlaceholderAPI, Skript]
 permissions:
+  parties.user.browse:
+    description: Open the clan recruitment browser after the configured playtime
+    default: true
+  parties.user.recruitment:
+    description: Use clan recruitment commands (clan rank also required to change status)
+    default: true
   parties.admin.clan.rename:
     default: op
     description: Allow /clanadmin rename on any clan
@@ -161,6 +167,8 @@ permissions:
     description: Can use normal party commands
     children:
       parties.user.accept: true
+      parties.user.browse: true
+      parties.user.recruitment: true
       parties.user.ask: true
       parties.user.chat: true
       parties.user.color: true
